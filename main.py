@@ -46,4 +46,5 @@ if __name__ == "__main__":
     subprocess.run(["redis-server"])
     _set_pages()
     _set_session_id()
-    redis.startup()
+    config_langsmith()
+    # redis.startup()
