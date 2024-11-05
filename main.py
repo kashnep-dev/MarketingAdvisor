@@ -47,4 +47,3 @@ if __name__ == "__main__":
     _set_pages()
     _set_session_id()
     redis.startup()
-    print(redis.get_connection())
