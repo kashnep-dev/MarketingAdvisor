@@ -1,0 +1,53 @@
+version: 1
+disable_existing_loggers: False
+
+formatters:
+  logformatter:
+    format: '[pid-%(process)d] %(asctime)s.%(msecs)03d] %(levelname)s [%(thread)d] - %(message)s'
+  accessformatter:
+    class: uvicorn.logging.AccessFormatter
+    format: '[pid-%(process)d] %(asctime)s] %(client_addr)s [%(thread)d] - %(request_line)s %(status_code)s'
+
+handlers:
+  logfile:
+    class: common.logging.log_handler.SafeRotatingFileHandler
+    level: DEBUG
+    formatter: logformatter
+    filename: '/logs/appLog.log'
+    when: 'midnight'
+
+  accesslogfile:
+    class: common.logging.log_handler.SafeRotatingFileHandler
+    level: DEBUG
+    formatter: accessformatter
+    filename: '/logs/accessLog.log'
+    when: 'midnight'
+
+  errorlogfile:
+    class: common.logging.log_handler.SafeRotatingFileHandler
+    level: ERROR
+    formatter: logformatter
+    filename: '/logs/errorLog.log'
+    when: 'midnight'
+
+  logconsole:
+    class: logging.StreamHandler
+    level: DEBUG
+    formatter: logformatter
+
+loggers:
+  root:
+    level: DEBUG
+    handlers: [logfile, logconsole]
+
+  uvicorn.access:
+    level: DEBUG
+    handlers: [accesslogfile]
+    propagate: False
+    qualname: uvicorn.access
+
+  uvicorn.error:
+    level: ERROR
+    handlers: [errorlogfile]
+    propagate: False
+    qualname: uvicorn.error
