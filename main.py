@@ -4,6 +4,7 @@ from langsmith import Client
 from langchain.callbacks.tracers import LangChainTracer
 from langchain_core.tracers.run_collector import RunCollectorCallbackHandler
 from langchain_core.runnables.config import RunnableConfig
+from common.util.redis_connection import redis_connection_pool as redis
 
 work_dir = os.path.dirname(os.path.abspath((__file__)))
 os.environ["WORK_DIR"] = work_dir
@@ -43,3 +44,5 @@ def _set_session_id():
 if __name__ == "__main__":
     _set_pages()
     _set_session_id()
+    redis.startup()
+    print(redis.get_connection())
