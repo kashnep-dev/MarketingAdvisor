@@ -75,13 +75,15 @@ class ReviewAdvertisement:
         result = callback_handler.result
         return result
 
-    async def generate_stream(self):
+    def generate_stream(self):
         chain_with_history = self._set_chain()
         callback_handler = StreamCallbackHandler(self.session_id, self.service_id, self.user_id, self.query, self.model_name)
         config = {"callbacks": [callback_handler], "configurable": {"session_id": self.session_id}}
-        response = chain_with_history.astream({"query": self.query}, config=config)
-        async for chunk in response:
+        response = chain_with_history.stream({"query": self.query}, config=config)
+        yield "```"
+        for chunk in response:
             yield chunk
+        yield "```"
 
 def review_advertisement2(ad_text, checklist):
     pass
