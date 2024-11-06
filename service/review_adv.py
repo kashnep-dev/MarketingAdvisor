@@ -1,6 +1,6 @@
-import json
+import os
 from pathlib import Path
-from typing import Any, Dict, Iterator
+from typing import Any, Dict
 
 import pandas as pd
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
@@ -12,7 +12,7 @@ from langchain_openai import ChatOpenAI
 from common.logging.logger import LOGGER
 from common.util.adcensor_util import get_message_history
 from common.util.callback_handler import NonStreamCallbackHandler, StreamCallbackHandler
-import time
+
 
 class ReviewAdvertisement:
 
@@ -34,13 +34,8 @@ class ReviewAdvertisement:
 
     @staticmethod
     def parse_checklist():
-        df = pd.read_excel(r'C:\Users\user\Desktop\checklist_26.xlsx')
-        print(df.head())
-        # df["세부항목_구분"] = df.iloc[:, 0] + "_" + df.iloc[:, 1]
-        # filtered_df = df[df['세부항목'].isin(['Trustworthy', 'Casual'])]
-        filtered_df = df
-        # checklist = filtered_df.to_string(index=False)
-        checklist = filtered_df.to_markdown(index=False)
+        df = pd.read_excel(os.path.join(os.environ["WORK_DIR"], "resources", "checklist", "checklist_26.xlsx"))
+        checklist = df.to_markdown(index=False)
         return checklist
 
     def _set_chain(self) -> RunnableWithMessageHistory:
@@ -84,6 +79,7 @@ class ReviewAdvertisement:
         for chunk in response:
             yield chunk
         yield "```"
+
 
 def review_advertisement2(ad_text, checklist):
     pass

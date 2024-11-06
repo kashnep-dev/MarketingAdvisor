@@ -10,6 +10,7 @@ st.title("📑 광고 심의")
 for ux in st.experimental_user.keys():
     print(f"review:{st.experimental_user.get(ux)}")
     st.session_state.session_id = f"review:{st.experimental_user.get(ux)}"
+    st.session_state.user_id = f"{st.experimental_user.get(ux)}"
 
 set_session_state()
 
@@ -60,8 +61,8 @@ if st.session_state.run_review_rerun:
             template_path=Path(__file__).resolve().parent.parent / "resources/prompts/review_advertisement2.yaml",
             query=st.session_state.review_query,
             session_id=st.session_state.session_id,
-            service_id="service_id_002",
-            user_id="kashnep",
+            service_id=st.session_state.session_id,
+            user_id=st.session_state.user_id,
             channel=review_channel,
             ad_text=review_ad_text
         )

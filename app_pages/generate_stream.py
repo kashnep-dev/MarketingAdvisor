@@ -9,7 +9,8 @@ st.title("💡 광고 생성")
 
 for ux in st.experimental_user.keys():
     print(f"generate:{st.experimental_user.get(ux)}")
-    st.session_state['session_id'] = f"generate:{st.experimental_user.get(ux)}"
+    st.session_state.session_id = f"generate:{st.experimental_user.get(ux)}"
+    st.session_state.user_id = f"{st.experimental_user.get(ux)}"
 
 set_session_state()
 
@@ -65,8 +66,8 @@ if st.session_state.run_generate_rerun:
             template_path=Path(__file__).resolve().parent.parent / "resources/prompts/ux_writing_guide.yaml",
             query=st.session_state.generate_query,
             session_id=st.session_state.session_id,
-            service_id="service_id_001",
-            user_id="kashnep",
+            service_id=st.session_state.session_id,
+            user_id=st.session_state.user_id,
             channel=generate_channel
         )
         with st.spinner('광고 문구를 생성 중입니다...'):
