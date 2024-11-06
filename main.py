@@ -1,6 +1,8 @@
 import os
-import psutil
+import sqlite3
 import subprocess
+
+import psutil
 import streamlit as st
 
 work_dir = os.path.dirname(os.path.abspath((__file__)))
@@ -46,7 +48,48 @@ def start_redis():
         print("This code is only for UNIX-based systems.")
 
 
+def create_tables():
+    conn = sqlite3.connect("shcard.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+            CREATE TABLE IF NOT EXISTS tb_trace (
+                trace_id TEXT NOT NULL,
+                trace_content TEXT NOT NULL,
+                trace_order INTEGER NOT NULL,
+                session_id TEXT NOT NULL,
+                prompt_id TEXT,
+                input_time TIMESTAMP NOT NULL,
+                user_input_yn INTEGER NOT NULL,  -- SQLite는 BOOLEAN을 지원하지 않으므로 INTEGER로 사용 (0: False, 1: True)
+                user_input_text TEXT,
+                usage_cost REAL NOT NULL,
+                usage_token_count INTEGER NOT NULL,
+                PRIMARY KEY (trace_id)
+            )
+        """)
+    conn.commit()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS tb_generation (
+            generation_id TEXT NOT NULL,
+            generation_order INTEGER NOT NULL,
+            generation_text TEXT NOT NULL,
+            response_start_time_stream TIMESTAMP,
+            response_end_time TIMESTAMP,
+            response_duration_time INTEGER,
+            response_start_time TIMESTAMP NOT NULL,
+            user_expose_step INTEGER NOT NULL,  -- BOOLEAN 대신 INTEGER 사용 (0: False, 1: True)
+            user_expose_text TEXT,
+            usage_cost REAL NOT NULL,
+            usage_token_count INTEGER NOT NULL,
+            usage_model_name TEXT NOT NULL,
+            PRIMARY KEY (generation_id)
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+
 if __name__ == "__main__":
     start_redis()
     _set_pages()
+    create_tables()
     # redis.startup()

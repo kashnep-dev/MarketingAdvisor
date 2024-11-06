@@ -1,8 +1,8 @@
-import os
 import pickle
+import sqlite3
 import time
 import uuid
-from os import path
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Sequence, Union
 from uuid import UUID
 
@@ -13,13 +13,7 @@ from langchain_core.messages import BaseMessage
 from langchain_core.outputs import LLMResult, GenerationChunk, ChatGenerationChunk
 from tenacity import RetryCallState
 
-# from common.db import adcensor_dao as dao
-# from common.db.db_connection import transactional
-# from common.db.schemas.tb_generation import TbGenerationLog
-# from common.db.schemas.tb_session import TbSessionLog
-# from common.db.schemas.tb_trace import TbTraceLog
 from common.logging.logger import LOGGER
-# from common.model import TbSession, TbTrace, TbGeneration
 from common.util.adcensor_util import get_openai_token_cost_for_model, get_token_size
 
 
@@ -208,24 +202,6 @@ class NonStreamCallbackHandler(BaseCallbackHandler):
     #     dao.insert_generation_log(TbGenerationLog(tb_generation))
     #
     # @transactional
-    # def send_trace_log(self):
-    #     """
-    #     이력 로그를 DB에 저장 한다.
-    #     """
-    #     tb_trace = TbTrace(
-    #         # TRACE_ID=self.trace_id,
-    #         TRACE_ID=uuid.uuid4().hex[:20],
-    #         TRACE_CONTENT=self.generation_text,
-    #         TRACE_ORDER=self.trace_order,
-    #         SESSION_ID=self.session_id,
-    #         PROMPT_ID=self.prompt_id,
-    #         INPUT_TIME=self.input_time,
-    #         USER_INPUT_YN=self.user_input_yn,
-    #         USER_INPUT_TEXT=self.query,
-    #         USAGE_COST=self.usage_cost,
-    #         USAGE_TOKEN_COUNT=self.usage_token_count
-    #     )
-    #     dao.insert_generation_log(TbTraceLog(tb_trace))
 
 
 class StreamCallbackHandler(AsyncCallbackHandler):
@@ -242,7 +218,7 @@ class StreamCallbackHandler(AsyncCallbackHandler):
         self.generation_order = 0
         self.user_expose_step = False
 
-        self.trace_id = service_id
+        self.trace_id = uuid.uuid4().hex[:20]
         self.trace_order = 0
         self.prompt_id = ''
         self.input_time = time.time()
@@ -283,10 +259,8 @@ class StreamCallbackHandler(AsyncCallbackHandler):
         self.end_time = time.time()
         self.elapsed_time = int(self.end_time - self.start_time)
         LOGGER.debug(f"총 실행 시간: {self.elapsed_time} 초")
-        #
-        # self.send_session_log()
-        # self.send_generation_log()
-        # self.send_trace_log()
+
+        self.insert_log()
 
     async def on_llm_start(self, serialized: Dict[str, Any], prompts: List[str], *, run_id: UUID,
                            parent_run_id: Optional[UUID] = None, tags: Optional[List[str]] = None,
@@ -409,22 +383,67 @@ class StreamCallbackHandler(AsyncCallbackHandler):
     #     )
     #     dao.insert_generation_log(TbGenerationLog(tb_generation))
     #
-    # @transactional
-    # def send_trace_log(self):
-    #     """
-    #     이력 로그를 DB에 저장 한다.
-    #     """
-    #     tb_trace = TbTrace(
-    #         # TRACE_ID=self.trace_id,
-    #         TRACE_ID=uuid.uuid4().hex[:20],
-    #         TRACE_CONTENT=self.generation_text,
-    #         TRACE_ORDER=self.trace_order,
-    #         SESSION_ID=self.session_id,
-    #         PROMPT_ID=self.prompt_id,
-    #         INPUT_TIME=self.input_time,
-    #         USER_INPUT_YN=self.user_input_yn,
-    #         USER_INPUT_TEXT=self.query,
-    #         USAGE_COST=self.usage_cost,
-    #         USAGE_TOKEN_COUNT=self.usage_token_count
-    #     )
-    #     dao.insert_generation_log(TbTraceLog(tb_trace))
+    def insert_log(self):
+        """
+        이력 로그를 DB에 저장 한다.
+        """
+        conn = sqlite3.connect("shcard.db")
+        cursor = conn.cursor()
+
+        cursor.execute(f"""
+                INSERT INTO tb_generation (
+                    generation_id,
+                    generation_order,
+                    generation_text,
+                    response_start_time_stream,
+                    response_end_time,
+                    response_duration_time,
+                    response_start_time,
+                    user_expose_step,
+                    user_expose_text,
+                    usage_cost,
+                    usage_token_count,
+                    usage_model_name
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    self.generation_id,
+                    0,
+                    self.generation_text,
+                    datetime.fromtimestamp(self.start_time).strftime('%Y-%m-%d %H:%M:%S'),
+                    datetime.fromtimestamp(self.end_time).strftime('%Y-%m-%d %H:%M:%S'),
+                    self.elapsed_time,
+                    datetime.fromtimestamp(self.start_time).strftime('%Y-%m-%d %H:%M:%S'),
+                    0,
+                    self.query,
+                    self.usage_cost,
+                    self.usage_token_count,
+                    self.usage_model_name
+                ))
+        conn.commit()
+        cursor.execute(f"""
+                INSERT INTO tb_trace (
+                    trace_id,
+                    trace_content,
+                    trace_order,
+                    session_id,
+                    prompt_id,
+                    input_time,
+                    user_input_yn,
+                    user_input_text,
+                    usage_cost,
+                    usage_token_count
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    self.trace_id,
+                    self.generation_text,
+                    self.trace_order,
+                    self.session_id,
+                    self.prompt_id,
+                    datetime.fromtimestamp(self.start_time).strftime('%Y-%m-%d %H:%M:%S'),
+                    0,
+                    self.query,
+                    self.usage_cost,
+                    self.usage_token_count
+                ))
+        conn.commit()
+        conn.close()
