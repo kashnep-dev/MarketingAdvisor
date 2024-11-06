@@ -1,3 +1,4 @@
+import os
 import sqlite3
 from datetime import datetime, timedelta
 
@@ -38,12 +39,12 @@ token_dict = dict.fromkeys(category_days, 0)
 cost_dict = dict.fromkeys(category_days, 0)
 
 # SQLite 데이터베이스 연결 및 데이터 가져오기
-conn = sqlite3.connect(r'C:\Users\user\PycharmProjects\MarketingAdvisor\shcard.db')
+conn = sqlite3.connect(os.path.join(os.environ["WORK_DIR"], "shcard.db"))
 cursor = conn.cursor()
 cursor.execute(f"""
     SELECT DATE(INPUT_TIME) AS DATE,
            SUM(USAGE_COST) * 100 AS TOTAL_USAGE_COST,
-           SUM(USAGE_TOKEN_COUNT) / 1000 AS TOTAL_USAGE_TOKEN_COUNT
+           SUM(USAGE_TOKEN_COUNT) / 1000.0 AS TOTAL_USAGE_TOKEN_COUNT
     FROM TB_TRACE
     WHERE INPUT_TIME BETWEEN DATE('{start_date_str}') AND DATE('{end_date_str}')
     GROUP BY DATE(INPUT_TIME)

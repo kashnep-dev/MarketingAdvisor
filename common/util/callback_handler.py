@@ -1,3 +1,4 @@
+import os
 import pickle
 import sqlite3
 import time
@@ -387,7 +388,7 @@ class StreamCallbackHandler(AsyncCallbackHandler):
         """
         이력 로그를 DB에 저장 한다.
         """
-        conn = sqlite3.connect("shcard.db")
+        conn = sqlite3.connect(os.path.join(os.environ["WORK_DIR"], "shcard.db"))
         cursor = conn.cursor()
 
         cursor.execute(f"""
@@ -406,19 +407,19 @@ class StreamCallbackHandler(AsyncCallbackHandler):
                     usage_model_name
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
-                    self.generation_id,
-                    0,
-                    self.generation_text,
-                    datetime.fromtimestamp(self.start_time).strftime('%Y-%m-%d %H:%M:%S'),
-                    datetime.fromtimestamp(self.end_time).strftime('%Y-%m-%d %H:%M:%S'),
-                    self.elapsed_time,
-                    datetime.fromtimestamp(self.start_time).strftime('%Y-%m-%d %H:%M:%S'),
-                    0,
-                    self.query,
-                    self.usage_cost,
-                    self.usage_token_count,
-                    self.usage_model_name
-                ))
+            self.generation_id,
+            0,
+            self.generation_text,
+            datetime.fromtimestamp(self.start_time).strftime('%Y-%m-%d %H:%M:%S'),
+            datetime.fromtimestamp(self.end_time).strftime('%Y-%m-%d %H:%M:%S'),
+            self.elapsed_time,
+            datetime.fromtimestamp(self.start_time).strftime('%Y-%m-%d %H:%M:%S'),
+            0,
+            self.query,
+            self.usage_cost,
+            self.usage_token_count,
+            self.usage_model_name
+        ))
         conn.commit()
         cursor.execute(f"""
                 INSERT INTO tb_trace (
@@ -434,16 +435,16 @@ class StreamCallbackHandler(AsyncCallbackHandler):
                     usage_token_count
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
-                    self.trace_id,
-                    self.generation_text,
-                    self.trace_order,
-                    self.session_id,
-                    self.prompt_id,
-                    datetime.fromtimestamp(self.start_time).strftime('%Y-%m-%d %H:%M:%S'),
-                    0,
-                    self.query,
-                    self.usage_cost,
-                    self.usage_token_count
-                ))
+            self.trace_id,
+            self.generation_text,
+            self.trace_order,
+            self.session_id,
+            self.prompt_id,
+            datetime.fromtimestamp(self.start_time).strftime('%Y-%m-%d %H:%M:%S'),
+            0,
+            self.query,
+            self.usage_cost,
+            self.usage_token_count
+        ))
         conn.commit()
         conn.close()
