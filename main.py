@@ -10,12 +10,15 @@ def _set_pages():
     dashboard = st.Page(
         "app_pages/dashboard.py", title="Dashboard", icon=":material/dashboard:", default=True
     )
+    prompts = st.Page(
+        "app_pages/prompts.py", title="Prompts", icon=":material/Robot:"
+    )
     page_1 = st.Page("app_pages/generate_stream.py", title="광고 생성 봇", icon=":material/search:")
     page_2 = st.Page("app_pages/review_stream.py", title="광고 심의 봇", icon=":material/history:")
 
     pg = st.navigation(
         {
-            "Reports": [dashboard],
+            "Reports": [dashboard, prompts],
             "Advisor": [page_1, page_2],
         }
     )

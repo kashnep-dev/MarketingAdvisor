@@ -3,6 +3,9 @@
 @ Description : AdCensor에 필요한 util 함수를 정의한다.
 """
 
+from typing import Optional
+
+import streamlit as st
 import tiktoken
 from langchain_community.chat_message_histories import RedisChatMessageHistory
 
@@ -164,3 +167,29 @@ def get_message_history(session_id: str, memory_window_size: int) -> RedisChatMe
         history.add_ai_message(history_list[idx + 1].content)
 
     return history
+
+
+def set_session_state():
+    if "generate_messages" not in st.session_state:
+        st.session_state.generate_messages = []
+
+    if "review_messages" not in st.session_state:
+        st.session_state.review_messages = []
+
+    if 'is_review_streaming' not in st.session_state:
+        st.session_state.is_review_streaming = False
+
+    if 'is_generate_streaming' not in st.session_state:
+        st.session_state.is_generate_streaming = False
+
+    if 'run_generate_rerun' not in st.session_state:
+        st.session_state.run_generate_rerun = False
+
+    if 'run_review_rerun' not in st.session_state:
+        st.session_state.run_review_rerun = False
+
+    if 'generate_query' not in st.session_state:
+        st.session_state.generate_query = Optional[str]
+
+    if 'review_query' not in st.session_state:
+        st.session_state.review_query = Optional[str]

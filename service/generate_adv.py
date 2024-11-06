@@ -96,7 +96,8 @@ class AdvertisementGenerator:
             image_url = response.data[0].url
             revised_prompt = response.data[0].revised_prompt
             # return {'image_url': image_url, 'revised_prompt': revised_prompt}
-            return f"<img src='{image_url}' />"
+            print(image_url)
+            return image_url
 
         except Exception as e:
             print(f"An error occurred: {e}")
