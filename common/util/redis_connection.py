@@ -61,5 +61,34 @@ class RedisConnectionPool:
     def get_url():
         return f"redis://{env.get('REDIS_HOST')}:{env.get('REDIS_PORT')}"
 
+    def get_redis_keys_and_sizes(self, pattern="*"):
+        # Redis 연결 설정
+        client = redis.Redis(host='localhost', port=6379, db=0)
+
+        # 패턴에 따라 키 목록 조회
+        keys = client.keys(pattern)
+        key_sizes = {}
+
+        # 각 키의 사이즈 확인
+        for key in keys:
+            key_type = client.type(key).decode("utf-8")
+
+            if key_type == "string":
+                size = client.strlen(key)  # 문자열 길이
+            elif key_type == "list":
+                size = client.llen(key)  # 리스트 길이
+            elif key_type == "set":
+                size = client.scard(key)  # 집합의 원소 개수
+            elif key_type == "zset":
+                size = client.zcard(key)  # 정렬 집합의 원소 개수
+            elif key_type == "hash":
+                size = client.hlen(key)  # 해시의 필드 개수
+            else:
+                size = "Unknown type"
+
+            key_sizes[key.decode("utf-8")] = size
+
+        return key_sizes
+
 
 redis_connection_pool = RedisConnectionPool()

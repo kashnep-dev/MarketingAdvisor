@@ -1,9 +1,12 @@
+import asyncio
 import os
 import sqlite3
 import subprocess
 
 import psutil
 import streamlit as st
+
+from common.util.redis_connection import redis_connection_pool as redis
 
 work_dir = os.path.dirname(os.path.abspath((__file__)))
 os.environ["WORK_DIR"] = work_dir
@@ -90,6 +93,7 @@ def create_tables():
 
 if __name__ == "__main__":
     start_redis()
+    asyncio.run(redis.startup())
     _set_pages()
     create_tables()
     # redis.startup()
