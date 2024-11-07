@@ -113,7 +113,7 @@ def parse_df_h(output):
     return df
 
 
-du_sh = subprocess.run(["du", "-sh", "*"], shell=True, capture_output=True, text=True).stdout.splitlines()
+du_sh = subprocess.run(["du", "-sh", "./"], shell=True, capture_output=True, text=True).stdout.splitlines()
 pwd = subprocess.run("pwd", shell=True, capture_output=True, text=True).stdout.strip()
 ls_al = subprocess.run(["ls", "-al"], capture_output=True, text=True).stdout.splitlines()
 df_h = subprocess.run(["df", "-h"], capture_output=True, text=True).stdout.splitlines()
