@@ -120,5 +120,5 @@ df_h = subprocess.run(["df", "-h"], capture_output=True, text=True).stdout.split
 
 st.info(f"du_sh : {du_sh}")
 st.info(f"pwd : {pwd}")
-st.markdown(f"ls_al : {"<br>".join(ls_al)}", unsafe_allow_html=True)
+st.code(f"ls_al : {"<br>".join(ls_al)}", unsafe_allow_html=True)
 st.dataframe(parse_df_h(df_h))
