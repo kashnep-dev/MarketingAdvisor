@@ -114,11 +114,11 @@ def parse_df_h(output):
 
 
 du_sh = subprocess.run(["du", "-sh", "../"], capture_output=True, text=True).stdout
-pwd = subprocess.run("cd ../ && pwd", shell=True, capture_output=True, text=True).stdout.strip()
+pwd = subprocess.run("pwd", shell=True, capture_output=True, text=True).stdout.strip()
 ls_al = subprocess.run(["ls", "-al"], capture_output=True, text=True).stdout.splitlines()
 df_h = subprocess.run(["df", "-h"], capture_output=True, text=True).stdout.splitlines()
 
 st.info(f"du_sh : {du_sh}")
 st.info(f"pwd : {pwd}")
-st.markdown(f"ls_al : {"<br>".join(ls_al)}")
+st.markdown(f"ls_al : {"<br>".join(ls_al)}", unsafe_allow_html=True)
 st.dataframe(parse_df_h(df_h))
