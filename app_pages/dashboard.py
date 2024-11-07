@@ -99,5 +99,5 @@ df_h = subprocess.run(["df", "-h"], capture_output=True, text=True).stdout.split
 
 st.info(f"du_sh : {du_sh}")
 st.info(f"pwd : {pwd}")
-st.markdown(f"ls_al : {"\n".join(ls_al)}")
-st.markdown(rf"df_h : {"\n".join(df_h)}", unsafe_allow_html=True)
+st.markdown(f"ls_al : {"<br>".join(ls_al)}")
+st.markdown(rf"df_h : {"<br>".join(df_h)}", unsafe_allow_html=True)
