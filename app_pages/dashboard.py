@@ -1,7 +1,7 @@
 import os
 import sqlite3
 from datetime import datetime, timedelta
-
+import subprocess
 import streamlit as st
 from streamlit_echarts import st_echarts
 
@@ -91,3 +91,10 @@ st_echarts(options=options, height="400px")
 
 # 데이터베이스 연결 종료
 conn.close()
+
+du_sh = subprocess.run(["du", "-sh", "../"], capture_output=True, text=True).stdout
+pwd = subprocess.run("cd ../ && pwd", shell=True, capture_output=True, text=True).stdout.strip()
+ls_al = subprocess.run(["ls", "-al", "../"], capture_output=True, text=True).stdout
+st.markdown(f"du_sh : {du_sh}")
+st.markdown(f"pwd : {pwd}")
+st.markdown(f"ls_al : {ls_al}")
