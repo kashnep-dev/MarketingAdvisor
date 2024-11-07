@@ -74,11 +74,13 @@ if st.session_state.run_generate_rerun:
             response = st.write_stream(generator.generate_stream())
         st.session_state.generate_messages.append({"role": "assistant", "content": response})
         if generate_image:
-            print(generate_image)
             with st.spinner('광고 시안을 생성 중입니다...'):
                 # st.markdown(f"<img src='{generator.generate_image(response)}'/>", unsafe_allow_html=True)
                 img_url = generator.generate_image(response)
-                st.image(img_url)
+                if isinstance(img_url, str):
+                    st.image(img_url)
+                else:
+                    st.code(img_url, language='json5')
                 st.session_state.generate_messages.append({"role": "assistant", "content": f"<img src='{img_url}'/>"})
-        st.session_state.is_generate_streaming = False
-        st.rerun()
+    st.session_state.is_generate_streaming = False
+    st.rerun()

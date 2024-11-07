@@ -100,5 +100,19 @@ class AdvertisementGenerator:
             return image_url
 
         except Exception as e:
-            print(f"An error occurred: {e}")
+            import ast
 
+            error_string = e.args[0]
+            error_dict = ast.literal_eval(error_string[18:])
+
+            # error의 code와 message 추출
+            error_code = error_dict['error']['code']
+            error_message = error_dict['error']['message']
+
+            print(f"Error code: {error_code}")
+            print(f"Error message: {error_message}")
+            print(f"An error occurred: {e}")
+            return {
+                "code": error_code,
+                "message": error_message
+            }
