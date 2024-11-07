@@ -94,7 +94,10 @@ conn.close()
 
 du_sh = subprocess.run(["du", "-sh", "../"], capture_output=True, text=True).stdout
 pwd = subprocess.run("cd ../ && pwd", shell=True, capture_output=True, text=True).stdout.strip()
-ls_al = subprocess.run(["ls", "-al", "../"], capture_output=True, text=True).stdout
+ls_al = subprocess.run(["ls", "-al"], capture_output=True, text=True).stdout
+df_h = subprocess.run(["df", "-h"], capture_output=True, text=True).stdout
+
 st.markdown(f"du_sh : {du_sh}")
 st.markdown(f"pwd : {pwd}")
 st.markdown(f"ls_al : {ls_al}")
+st.markdown(f"df_h : {df_h}")
