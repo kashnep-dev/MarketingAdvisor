@@ -99,5 +99,5 @@ df_h = subprocess.run(["df", "-h"], capture_output=True, text=True).stdout.split
 
 st.info(f"du_sh : {du_sh}")
 st.info(f"pwd : {pwd}")
-st.info(f"ls_al : {ls_al}")
-st.info(f"df_h : {df_h}")
+st.info(f"ls_al : {r"\n".join(ls_al)}")
+st.info(rf"df_h : {r"\n".join(df_h)}")
