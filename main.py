@@ -86,12 +86,7 @@ def create_tables():
     """)
     conn.commit()
     conn.close()
-du_sh = subprocess.run(["du", "-sh", "../"], capture_output=True, text=True).stdout
-pwd = subprocess.run("cd ../ && pwd", shell=True, capture_output=True, text=True).stdout.strip()
-ls_al = subprocess.run(["ls", "-al", "../"], capture_output=True, text=True).stdout
-print(f"du_sh : {du_sh}")
-print(f"pwd : {pwd}")
-print(f"ls_al : {ls_al}")
+
 
 if __name__ == "__main__":
     start_redis()
