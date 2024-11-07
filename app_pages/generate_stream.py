@@ -63,7 +63,7 @@ if st.session_state.run_generate_rerun:
     with st.chat_message("assistant"):
         generator = AdvertisementGenerator(
             model_name=generate_model_name,
-            template_path=Path(__file__).resolve().parent.parent / "resources/prompts/ux_writing_guide.yaml",
+            template_path=Path(__file__).resolve().parent.parent / "resources/prompts/ux_writing_guide2.yaml",
             query=st.session_state.generate_query,
             session_id=st.session_state.session_id,
             service_id=st.session_state.session_id,
