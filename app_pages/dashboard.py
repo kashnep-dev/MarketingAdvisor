@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import subprocess
 import streamlit as st
 from streamlit_echarts import st_echarts
+import pandas as pd
 
 st.title("📊 Dashboard")
 
@@ -92,6 +93,26 @@ st_echarts(options=options, height="400px")
 # 데이터베이스 연결 종료
 conn.close()
 
+
+def parse_df_h(output):
+    headers = output[0].split()
+    rows = [line.split() for line in output[1:]]
+
+    # 각 행의 길이를 확인하고 부족한 열이 있으면 빈 문자열 추가
+    adjusted_rows = []
+    for row in rows:
+        # 6개의 항목만 있는 경우 마지막 열 추가
+        if len(row) == 6:
+            row.append("")
+        adjusted_rows.append(row)
+
+    # DataFrame 생성
+    df = pd.DataFrame(adjusted_rows, columns=headers)
+
+    # DataFrame 출력
+    return df
+
+
 du_sh = subprocess.run(["du", "-sh", "../"], capture_output=True, text=True).stdout
 pwd = subprocess.run("cd ../ && pwd", shell=True, capture_output=True, text=True).stdout.strip()
 ls_al = subprocess.run(["ls", "-al"], capture_output=True, text=True).stdout.splitlines()
@@ -100,4 +121,4 @@ df_h = subprocess.run(["df", "-h"], capture_output=True, text=True).stdout.split
 st.info(f"du_sh : {du_sh}")
 st.info(f"pwd : {pwd}")
 st.markdown(f"ls_al : {"<br>".join(ls_al)}")
-st.markdown(rf"df_h : {"<br>".join(df_h)}", unsafe_allow_html=True)
+st.dataframe(parse_df_h(df_h))
