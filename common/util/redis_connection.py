@@ -63,8 +63,8 @@ class RedisConnectionPool:
 
     def get_redis_keys_and_sizes(self, pattern="*"):
         # Redis 연결 설정
-        client = redis.Redis(host='localhost', port=6379, db=0)
-
+        # client = redis.Redis(host='localhost', port=6379, db=0)
+        client = self.redis
         # 패턴에 따라 키 목록 조회
         keys = client.keys(pattern)
         key_sizes = {}
