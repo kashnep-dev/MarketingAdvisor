@@ -1,13 +1,16 @@
+import asyncio
 import os
 import sqlite3
-from datetime import datetime, timedelta, date
 import subprocess
+from datetime import datetime, timedelta, date
+from typing import Optional, Dict
+
+import pandas as pd
 import streamlit as st
 from streamlit_echarts import st_echarts
-import pandas as pd
-from typing import Optional, Dict
+
 from common.util.redis_connection import redis_connection_pool as redis
-import asyncio
+
 st.title("📊 Dashboard")
 
 st.markdown(
@@ -120,13 +123,6 @@ class DrawLineChart:
         st_echarts(options=options, height="400px")
 
 
-if search_button:
-    if len(date_inputs) > 1:
-        line_chart = DrawLineChart(date_tuple=date_inputs)
-        line_chart.draw()
-        print(f"search_button : {search_button}")
-
-
 def parse_df_h(output):
     headers = output[0].split()
     rows = [line.split() for line in output[1:]]
@@ -146,20 +142,25 @@ def parse_df_h(output):
     return df
 
 
-if os.name == 'posix':  # UNIX 계열 운영 체제 확인
-    pwd = subprocess.run("pwd", shell=True, capture_output=True, text=True).stdout.strip()
-    ls_al = subprocess.run(["ls", "-al"], capture_output=True, text=True).stdout.splitlines()
-    df_h = subprocess.run(["df", "-h"], capture_output=True, text=True).stdout.splitlines()
+if search_button:
+    if len(date_inputs) > 1:
+        line_chart = DrawLineChart(date_tuple=date_inputs)
+        line_chart.draw()
+        print(f"search_button : {search_button}")
 
-    st.code(f"{pwd} : {"\n".join(ls_al)}", language="bash")
-    st.dataframe(parse_df_h(df_h))
+    if os.name == 'posix':  # UNIX 계열 운영 체제 확인
+        pwd = subprocess.run("pwd", shell=True, capture_output=True, text=True).stdout.strip()
+        ls_al = subprocess.run(["ls", "-al"], capture_output=True, text=True).stdout.splitlines()
+        df_h = subprocess.run(["df", "-h"], capture_output=True, text=True).stdout.splitlines()
 
+        st.code(f"{pwd} : {"\n".join(ls_al)}", language="bash")
+        st.dataframe(parse_df_h(df_h))
 
-key_sizes = redis.get_redis_keys_and_sizes()
-for key, size in key_sizes.items():
-    st.info(f"Key: {key}, Size: {size}")
+    key_sizes = redis.get_redis_keys_and_sizes()
+    for key, size in key_sizes.items():
+        st.info(f"Key: {key}, Size: {size}")
 
-redis_key = st.text_input("삭제할 키를 입력해 주세요.")
-delete_button = st.button("삭제")
-if delete_button:
-    asyncio.run(redis.remove(redis_key))
+    redis_key = st.text_input("삭제할 키를 입력해 주세요.")
+    delete_button = st.button("삭제")
+    if delete_button:
+        asyncio.run(redis.remove(redis_key))

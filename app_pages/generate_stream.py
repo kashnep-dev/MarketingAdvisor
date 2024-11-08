@@ -48,7 +48,7 @@ with st.sidebar:
                                  key="generate_image",
                                  disabled=st.session_state.is_generate_streaming)
 
-if generate_query := st.chat_input("궁금한 내용을 입력해 주세요", disabled=st.session_state.is_generate_streaming):
+if generate_query := st.chat_input("LG유플러스의 기업 특성을 활용한 신한카드 광고 문구를 생성해주세요", disabled=st.session_state.is_generate_streaming):
     if not st.session_state.is_generate_streaming:
         st.session_state.generate_messages.append({"role": "user", "content": generate_query})
         with st.chat_message("user"):
