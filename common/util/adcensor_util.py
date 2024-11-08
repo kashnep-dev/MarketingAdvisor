@@ -202,7 +202,7 @@ def set_session_state():
 class DrawChart:
     def __init__(self, date_tuple, today):
         self.start_date: date = date_tuple[0]
-        self.end_date: date = date_tuple[1]
+        self.end_date: date = date_tuple[1] + timedelta(days=1)
         self.date_format: str = "%Y-%m-%d"
         self.start_date_str = self.end_date_str = ''
         self.token_dict = self.cost_dict = Dict[str, float]
