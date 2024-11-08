@@ -41,7 +41,7 @@ with col2:
 
 if search_button:
     if len(date_inputs) > 1:
-        draw_chart = DrawChart(date_tuple=date_inputs)
+        draw_chart = DrawChart(date_tuple=date_inputs, today=today)
         st.markdown("<h3>Open AI API 사용량</h2>", unsafe_allow_html=True)
         draw_chart.draw_pie_chart()
         st.divider()
