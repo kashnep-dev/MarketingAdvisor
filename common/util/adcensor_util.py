@@ -276,15 +276,15 @@ class DrawChart:
         conn.close()
         print(rows)
         for session_id, count in rows:
-            name = ''
-            if session_id == "jaehyuneo@gmail.com":
-                name = "어재현"
-            elif session_id == "kinsm1024@gmail.com":
-                name = "정성모"
-            elif session_id == "forestedfire@gmail.com":
-                name = "박재완"
-            elif session_id == "chuljuman@gmail.com":
-                name = "고철주"
+            name = session_id
+            # if session_id == "jaehyuneo@gmail.com":
+            #     name = "어재현"
+            # elif session_id == "kinsm1024@gmail.com":
+            #     name = "정성모"
+            # elif session_id == "forestedfire@gmail.com":
+            #     name = "박재완"
+            # elif session_id == "chuljuman@gmail.com":
+            #     name = "고철주"
             self.pie_list.append({"name": name, "value": count})
 
     def draw_pie_chart(self):
