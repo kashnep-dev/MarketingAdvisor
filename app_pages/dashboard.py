@@ -147,6 +147,7 @@ if search_button:
         line_chart = DrawLineChart(date_tuple=date_inputs)
         st.markdown("<h3>Open AI API 사용량</h2>", unsafe_allow_html=True)
         line_chart.draw()
+        st.divider()
         print(f"search_button : {search_button}")
 
     if os.name == 'posix':  # UNIX 계열 운영 체제 확인
@@ -157,6 +158,7 @@ if search_button:
         st.markdown("<h3>Streamlit 서버 정보</h2>", unsafe_allow_html=True)
         st.code(f"{pwd} : {"\n".join(ls_al)}", language="bash")
         st.dataframe(parse_df_h(df_h))
+        st.divider()
 
     st.markdown("<h3>Redis Key 현황</h2>", unsafe_allow_html=True)
     key_sizes = redis.get_redis_keys_and_sizes()
