@@ -5,6 +5,8 @@ import streamlit as st
 
 from common.util.adcensor_util import DrawChart
 from common.util.redis_connection import redis_connection_pool as redis
+import os
+import sqlite3
 
 st.title("🛡️ Admin")
 
@@ -39,6 +41,8 @@ with col2:
     search_button = st.button("조회", key="search")
     st.markdown('</div>', unsafe_allow_html=True)
 
+query_input = st.text_input("쿼리를 입력해 주세요")
+
 if search_button:
     if len(date_inputs) > 1:
         draw_chart = DrawChart(date_tuple=date_inputs, today=today)
@@ -55,3 +59,11 @@ if search_button:
     delete_button = st.button("삭제")
     if delete_button:
         asyncio.run(redis.remove(redis_key))
+
+    if query_input:
+        conn = sqlite3.connect(os.path.join(os.environ["WORK_DIR"], "shcard.db"))
+        cursor = conn.cursor()
+        cursor.execute(query_input)
+        rows = cursor.fetchall()
+        st.code(rows, language="sql")
+        conn.close()
