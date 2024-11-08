@@ -19,6 +19,8 @@ for message in st.session_state.generate_messages:
     with st.chat_message(message["role"]):
         if 'img' in message["content"]:
             st.markdown(message["content"], unsafe_allow_html=True)
+        elif 'code' in message["content"]:
+            st.code(message["content"], language='json5')
         else:
             st.markdown(message["content"])
 
@@ -75,12 +77,13 @@ if st.session_state.run_generate_rerun:
         st.session_state.generate_messages.append({"role": "assistant", "content": response})
         if generate_image:
             with st.spinner('광고 시안을 생성 중입니다...'):
-                # st.markdown(f"<img src='{generator.generate_image(response)}'/>", unsafe_allow_html=True)
                 img_url = generator.generate_image(response)
                 if isinstance(img_url, str):
                     st.image(img_url)
+                    st.session_state.generate_messages.append({"role": "assistant", "content": f"<img src='{img_url}'/>"})
                 else:
                     st.code(img_url, language='json5')
-                st.session_state.generate_messages.append({"role": "assistant", "content": f"<img src='{img_url}'/>"})
+                    st.session_state.generate_messages.append({"role": "assistant", "content": f"{img_url}"})
+
     st.session_state.is_generate_streaming = False
     st.rerun()

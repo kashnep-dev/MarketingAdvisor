@@ -3,9 +3,10 @@
 @ Description : 광고 문구와 시안 이미지를 생성한다.
 """
 import json
+import ast
 import os
 from pathlib import Path
-from typing import Any, Dict, Iterator
+from typing import Any, Dict, Union
 
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import StrOutputParser
@@ -82,8 +83,9 @@ class AdvertisementGenerator:
             yield chunk
 
     @staticmethod
-    def generate_image(prompt):
+    def generate_image(prompt) -> Union[Dict, str]:
         client = OpenAI(api_key=env.get("OPENAI_API_KEY"))
+        result = ''
         try:
             response = client.images.generate(
                 model="dall-e-3",
@@ -93,14 +95,12 @@ class AdvertisementGenerator:
                 size="1024x1024"
             )
 
-            image_url = response.data[0].url
+            result = response.data[0].url
             revised_prompt = response.data[0].revised_prompt
             # return {'image_url': image_url, 'revised_prompt': revised_prompt}
-            print(image_url)
-            return image_url
+            print(result)
 
         except Exception as e:
-            import ast
 
             error_string = e.args[0]
             error_dict = ast.literal_eval(error_string[18:])
@@ -112,7 +112,12 @@ class AdvertisementGenerator:
             print(f"Error code: {error_code}")
             print(f"Error message: {error_message}")
             print(f"An error occurred: {e}")
-            return {
+            result = {
                 "code": error_code,
                 "message": error_message
             }
+        finally:
+            print(isinstance(result, str))
+            print(isinstance(result, Dict))
+            print(type(result))
+            return result
