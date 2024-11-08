@@ -63,7 +63,13 @@ if search_button:
     if query_input:
         conn = sqlite3.connect(os.path.join(os.environ["WORK_DIR"], "shcard.db"))
         cursor = conn.cursor()
-        cursor.execute(query_input)
-        rows = cursor.fetchall()
-        st.code(rows, language="sql")
+        if 'select' in query_input:
+            cursor.execute(query_input)
+            rows = cursor.fetchall()
+            st.code(rows, language="sql")
+        else:
+            cursor.execute(query_input)
+            conn.commit()
+
+            st.code(query_input, language="sql")
         conn.close()
