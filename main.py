@@ -11,6 +11,14 @@ from common.util.redis_connection import redis_connection_pool as redis
 work_dir = os.path.dirname(os.path.abspath((__file__)))
 os.environ["WORK_DIR"] = work_dir
 
+if 'admin_id' not in st.session_state:
+    st.session_state.admin_id = ''
+
+for ux in st.experimental_user.keys():
+    print(f"st.experimental_user.get(ux) : {st.experimental_user.get(ux)}")
+    if st.experimental_user.get(ux) == "jaehyuneo@gmail.com" or st.experimental_user.get(ux) == "test@example.com":
+        st.session_state.admin_id = f"{st.experimental_user.get(ux)}"
+
 
 def _set_pages():
     dashboard = st.Page(
@@ -22,11 +30,18 @@ def _set_pages():
     page_1 = st.Page("app_pages/generate_stream.py", title="광고 생성 봇", icon=":material/search:")
     page_2 = st.Page("app_pages/review_stream.py", title="광고 심의 봇", icon=":material/history:")
 
+    admin = st.Page("app_pages/admin.py", title="Admin", icon=":material/shield_person:")
+
+    page_info = {
+        "Reports": [dashboard, prompts],
+        "Advisor": [page_1, page_2],
+    }
+
+    if st.session_state.admin_id:
+        page_info["Admin"] = [admin]
+
     pg = st.navigation(
-        {
-            "Reports": [dashboard, prompts],
-            "Advisor": [page_1, page_2],
-        }
+        page_info
     )
     pg.run()
 

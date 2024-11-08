@@ -3,11 +3,15 @@
 @ Description : AdCensor에 필요한 util 함수를 정의한다.
 """
 
-from typing import Optional
+import os
+import sqlite3
+from datetime import timedelta, date
+from typing import Optional, Dict
 
 import streamlit as st
 import tiktoken
 from langchain_community.chat_message_histories import RedisChatMessageHistory
+from streamlit_echarts import st_echarts
 
 from common.util.redis_connection import redis_connection_pool as redis
 
@@ -189,7 +193,150 @@ def set_session_state():
         st.session_state.run_review_rerun = False
 
     if 'generate_query' not in st.session_state:
-        st.session_state.generate_query = Optional[str]
+        st.session_state.generate_query = ''
 
     if 'review_query' not in st.session_state:
-        st.session_state.review_query = Optional[str]
+        st.session_state.review_query = ''
+
+
+class DrawChart:
+    def __init__(self, date_tuple, today):
+        self.start_date: date = date_tuple[0]
+        self.end_date: date = date_tuple[1]
+        self.date_format: str = "%Y-%m-%d"
+        self.start_date_str = self.end_date_str = ''
+        self.token_dict = self.cost_dict = Dict[str, float]
+        self.pie_list = []
+        self.today = today
+
+    def generate_date_range(self, date_format):
+        return [(self.start_date + timedelta(days=i)).strftime(date_format)
+                for i in range((self.end_date - self.start_date).days + 1)]
+
+    def retrieve_linechart_data(self):
+        # SQLite 데이터베이스 연결 및 데이터 가져오기
+        conn = sqlite3.connect(os.path.join(os.environ["WORK_DIR"], "shcard.db"))
+        cursor = conn.cursor()
+        cursor.execute(f"""
+            SELECT DATE(INPUT_TIME) AS DATE,
+                   SUM(USAGE_COST) * 100 AS TOTAL_USAGE_COST,
+                   SUM(USAGE_TOKEN_COUNT) / 1000.0 AS TOTAL_USAGE_TOKEN_COUNT
+            FROM TB_TRACE
+            WHERE INPUT_TIME BETWEEN DATE('{self.start_date_str}') AND DATE('{self.end_date_str}')
+            GROUP BY DATE(INPUT_TIME)
+            ORDER BY DATE
+        """)
+        rows = cursor.fetchall()
+        conn.close()
+        for date_str, total_usage_cost, total_usage_token_count in rows:
+            self.token_dict[date_str] = total_usage_token_count
+            self.cost_dict[date_str] = total_usage_cost
+
+    def retrieve_piechart_data(self):
+        # SQLite 데이터베이스 연결 및 데이터 가져오기
+        conn = sqlite3.connect(os.path.join(os.environ["WORK_DIR"], "shcard.db"))
+        cursor = conn.cursor()
+        cursor.execute(f"""
+            SELECT
+                COALESCE(
+                    NULLIF(
+                        CASE
+                            WHEN session_id LIKE 'generate:%' THEN SUBSTR(session_id, 10)
+                            WHEN session_id LIKE 'review:%' THEN SUBSTR(session_id, 8)
+                            ELSE session_id
+                        END,
+                        ''
+                    ), 'unknown'
+                ) AS session_id,
+                COUNT(*) AS count
+            FROM tb_trace
+            WHERE INPUT_TIME BETWEEN DATE('{self.start_date_str}') AND DATE('{self.end_date_str}')
+            GROUP BY
+                COALESCE(
+                    NULLIF(
+                        CASE
+                            WHEN session_id LIKE 'generate:%' THEN SUBSTR(session_id, 10)
+                            WHEN session_id LIKE 'review:%' THEN SUBSTR(session_id, 8)
+                            ELSE session_id
+                        END,
+                        ''
+                    ), 'unknown'
+                )
+        """)
+        rows = cursor.fetchall()
+        conn.close()
+        for session_id, count in rows:
+            self.pie_list.append({"name": session_id, "value": count})
+
+        options = {
+            "title": {"text": "사용자 별 사용량", "left": "center"},
+            "tooltip": {"trigger": "item"},
+            "legend": {"orient": "vertical", "left": "left"},
+            "series": [
+                {
+                    "name": "방문 출처",
+                    "type": "pie",
+                    "radius": "50%",
+                    "data": self.pie_list,
+                    "emphasis": {
+                        "itemStyle": {
+                            "shadowBlur": 10,
+                            "shadowOffsetX": 0,
+                            "shadowColor": "rgba(0, 0, 0, 0.5)",
+                        }
+                    },
+                }
+            ],
+        }
+        st_echarts(
+            options=options, height="600px",
+        )
+
+    def draw_line_chart(self):
+        category_days = self.generate_date_range(self.date_format)
+        short_category_days = self.generate_date_range(self.date_format[3:])
+
+        # 조회 기간 설정
+        self.start_date_str, end_date_str = category_days[0], category_days[-1]
+        self.end_date_str = (self.today + timedelta(days=1)).strftime(self.date_format) if self.today.strftime(self.date_format) == end_date_str else end_date_str
+
+        # 초기값 설정
+        self.token_dict = dict.fromkeys(category_days, 0)
+        self.cost_dict = dict.fromkeys(category_days, 0)
+
+        # 데이터 조회
+        self.retrieve_linechart_data()
+
+        options = {
+            "title": {"text": "사용 정보"},
+            "tooltip": {"trigger": "axis"},
+            "legend": {"data": ["토큰 사용량(k)", "사용 비용(¢)"]},
+            "grid": {"left": "3%", "right": "4%", "bottom": "3%", "containLabel": True},
+            "toolbox": {},
+            "xAxis": {
+                "type": "category",
+                "boundaryGap": True,
+                "data": short_category_days,
+            },
+            "yAxis": {"type": "value"},
+            "series": [
+                {
+                    "name": "토큰 사용량(k)",
+                    "type": "line",
+                    "stack": "총량",
+                    "data": list(self.token_dict.values()),
+                },
+                {
+                    "name": "사용 비용(¢)",
+                    "type": "bar",
+                    "stack": "총량",
+                    "data": list(self.cost_dict.values()),
+                },
+            ]
+        }
+
+        # 차트 렌더링
+        st_echarts(options=options, height="400px")
+
+    def draw_pie_chart(self):
+        pass

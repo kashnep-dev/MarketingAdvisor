@@ -1,15 +1,11 @@
-import asyncio
 import os
-import sqlite3
 import subprocess
-from datetime import datetime, timedelta, date
-from typing import Optional, Dict
+from datetime import datetime, timedelta
 
 import pandas as pd
 import streamlit as st
-from streamlit_echarts import st_echarts
 
-from common.util.redis_connection import redis_connection_pool as redis
+from common.util.adcensor_util import DrawChart
 
 st.title("📊 Dashboard")
 
@@ -45,84 +41,6 @@ with col2:
     st.markdown('</div>', unsafe_allow_html=True)
 
 
-class DrawLineChart:
-    def __init__(self, date_tuple):
-        self.start_date: date = date_tuple[0]
-        self.end_date: date = date_tuple[1]
-        self.date_format: str = "%Y-%m-%d"
-        self.start_date_str = self.end_date_str = Optional[str]
-        self.token_dict = self.cost_dict = Optional[Dict[str, float]]
-
-    def generate_date_range(self, date_format):
-        return [(self.start_date + timedelta(days=i)).strftime(date_format)
-                for i in range((self.end_date - self.start_date).days + 1)]
-
-    def retrieve_linechart_data(self):
-        # SQLite 데이터베이스 연결 및 데이터 가져오기
-        conn = sqlite3.connect(os.path.join(os.environ["WORK_DIR"], "shcard.db"))
-        cursor = conn.cursor()
-        cursor.execute(f"""
-            SELECT DATE(INPUT_TIME) AS DATE,
-                   SUM(USAGE_COST) * 100 AS TOTAL_USAGE_COST,
-                   SUM(USAGE_TOKEN_COUNT) / 1000.0 AS TOTAL_USAGE_TOKEN_COUNT
-            FROM TB_TRACE
-            WHERE INPUT_TIME BETWEEN DATE('{self.start_date_str}') AND DATE('{self.end_date_str}')
-            GROUP BY DATE(INPUT_TIME)
-            ORDER BY DATE
-        """)
-        rows = cursor.fetchall()
-        conn.close()
-        for date_str, total_usage_cost, total_usage_token_count in rows:
-            self.token_dict[date_str] = total_usage_token_count
-            self.cost_dict[date_str] = total_usage_cost
-
-    def draw(self):
-        category_days = self.generate_date_range(self.date_format)
-        short_category_days = self.generate_date_range(self.date_format[3:])
-
-        # 조회 기간 설정
-        self.start_date_str, end_date_str = category_days[0], category_days[-1]
-        self.end_date_str = (today + timedelta(days=1)).strftime(self.date_format) if today.strftime(self.date_format) == end_date_str else end_date_str
-
-        # 초기값 설정
-        self.token_dict = dict.fromkeys(category_days, 0)
-        self.cost_dict = dict.fromkeys(category_days, 0)
-
-        # 데이터 조회
-        self.retrieve_linechart_data()
-
-        options = {
-            "title": {"text": "사용 정보"},
-            "tooltip": {"trigger": "axis"},
-            "legend": {"data": ["토큰 사용량(k)", "사용 비용(¢)"]},
-            "grid": {"left": "3%", "right": "4%", "bottom": "3%", "containLabel": True},
-            "toolbox": {},
-            "xAxis": {
-                "type": "category",
-                "boundaryGap": True,
-                "data": short_category_days,
-            },
-            "yAxis": {"type": "value"},
-            "series": [
-                {
-                    "name": "토큰 사용량(k)",
-                    "type": "line",
-                    "stack": "총량",
-                    "data": list(self.token_dict.values()),
-                },
-                {
-                    "name": "사용 비용(¢)",
-                    "type": "bar",
-                    "stack": "총량",
-                    "data": list(self.cost_dict.values()),
-                },
-            ]
-        }
-
-        # 차트 렌더링
-        st_echarts(options=options, height="400px")
-
-
 def parse_df_h(output):
     headers = output[0].split()
     rows = [line.split() for line in output[1:]]
@@ -144,9 +62,9 @@ def parse_df_h(output):
 
 if search_button:
     if len(date_inputs) > 1:
-        line_chart = DrawLineChart(date_tuple=date_inputs)
+        draw_chart = DrawChart(date_tuple=date_inputs, today=today)
         st.markdown("<h3>Open AI API 사용량</h2>", unsafe_allow_html=True)
-        line_chart.draw()
+        draw_chart.draw_line_chart()
         st.divider()
         print(f"search_button : {search_button}")
 
@@ -160,12 +78,4 @@ if search_button:
         st.dataframe(parse_df_h(df_h))
         st.divider()
 
-    st.markdown("<h3>Redis Key 현황</h2>", unsafe_allow_html=True)
-    key_sizes = redis.get_redis_keys_and_sizes()
-    for key, size in key_sizes.items():
-        st.info(f"Key: {key}, Size: {size}")
 
-    redis_key = st.text_input("삭제할 키를 입력해 주세요.")
-    delete_button = st.button("삭제")
-    if delete_button:
-        asyncio.run(redis.remove(redis_key))
