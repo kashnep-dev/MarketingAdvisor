@@ -202,7 +202,7 @@ def set_session_state():
 class DrawChart:
     def __init__(self, date_tuple, today):
         self.start_date: date = date_tuple[0]
-        self.end_date: date = date_tuple[1] + timedelta(days=1)
+        self.end_date: date = date_tuple[1]
         self.date_format: str = "%Y-%m-%d"
         self.start_date_str = self.end_date_str = ''
         self.token_dict = self.cost_dict = Dict[str, float]
@@ -218,6 +218,15 @@ class DrawChart:
         conn = sqlite3.connect(os.path.join(os.environ["WORK_DIR"], "shcard.db"))
         cursor = conn.cursor()
         cursor.execute(f"""
+            SELECT DATE(INPUT_TIME) AS DATE,
+                   SUM(USAGE_COST) * 100 AS TOTAL_USAGE_COST,
+                   SUM(USAGE_TOKEN_COUNT) / 1000.0 AS TOTAL_USAGE_TOKEN_COUNT
+            FROM TB_TRACE
+            WHERE INPUT_TIME BETWEEN DATE('{self.start_date_str}') AND DATE('{self.end_date_str}')
+            GROUP BY DATE(INPUT_TIME)
+            ORDER BY DATE
+        """)
+        print(f"""
             SELECT DATE(INPUT_TIME) AS DATE,
                    SUM(USAGE_COST) * 100 AS TOTAL_USAGE_COST,
                    SUM(USAGE_TOKEN_COUNT) / 1000.0 AS TOTAL_USAGE_TOKEN_COUNT
@@ -265,16 +274,34 @@ class DrawChart:
         """)
         rows = cursor.fetchall()
         conn.close()
+        print(rows)
         for session_id, count in rows:
-            self.pie_list.append({"name": session_id, "value": count})
+            name = ''
+            if session_id == "jaehyuneo@gmail.com":
+                name = "어재현"
+            elif session_id == "kinsm1024@gmail.com":
+                name = "정성모"
+            elif session_id == "forestedfire@gmail.com":
+                name = "박재완"
+            elif session_id == "chuljuman@gmail.com":
+                name = "고철주"
+            self.pie_list.append({"name": name, "value": count})
 
+    def draw_pie_chart(self):
+        category_days = self.generate_date_range(self.date_format)
+
+        # 조회 기간 설정
+        self.start_date_str, end_date_str = category_days[0], category_days[-1]
+        self.end_date_str = (self.today + timedelta(days=1)).strftime(self.date_format) if self.today.strftime(self.date_format) == end_date_str else end_date_str
+
+        self.retrieve_piechart_data()
         options = {
             "title": {"text": "사용자 별 사용량", "left": "center"},
             "tooltip": {"trigger": "item"},
             "legend": {"orient": "vertical", "left": "left"},
             "series": [
                 {
-                    "name": "방문 출처",
+                    "name": "",
                     "type": "pie",
                     "radius": "50%",
                     "data": self.pie_list,
@@ -337,6 +364,3 @@ class DrawChart:
 
         # 차트 렌더링
         st_echarts(options=options, height="400px")
-
-    def draw_pie_chart(self):
-        pass
