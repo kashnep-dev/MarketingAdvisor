@@ -145,6 +145,7 @@ def parse_df_h(output):
 if search_button:
     if len(date_inputs) > 1:
         line_chart = DrawLineChart(date_tuple=date_inputs)
+        st.markdown("<h3>Open AI API 사용량</h2>", unsafe_allow_html=True)
         line_chart.draw()
         print(f"search_button : {search_button}")
 
@@ -153,9 +154,11 @@ if search_button:
         ls_al = subprocess.run(["ls", "-al"], capture_output=True, text=True).stdout.splitlines()
         df_h = subprocess.run(["df", "-h"], capture_output=True, text=True).stdout.splitlines()
 
+        st.markdown("<h3>Streamlit 서버 정보</h2>", unsafe_allow_html=True)
         st.code(f"{pwd} : {"\n".join(ls_al)}", language="bash")
         st.dataframe(parse_df_h(df_h))
 
+    st.markdown("<h3>Redis Key 현황</h2>", unsafe_allow_html=True)
     key_sizes = redis.get_redis_keys_and_sizes()
     for key, size in key_sizes.items():
         st.info(f"Key: {key}, Size: {size}")
